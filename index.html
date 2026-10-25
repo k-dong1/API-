@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEXT 시흥 API 명세</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: sticky domain index on the left, endpoint reference on the right; collapses to one column on phones */
+:root{
+  --bg:#F4F6F6; --surface:#FFFFFF; --sunken:#EEF2F1; --line:#DCE3E1;
+  --fg:#14201E; --fg2:#3E4C49; --muted:#6A7A76;
+  --accent:#0F8C7B; --accent-soft:#E2F3F0; --code-bg:#F1F5F4; --code-fg:#1D2B28;
+  --get:#1F6FD1; --get-bg:#E6F0FC; --post:#13875A; --post-bg:#E3F5EC;
+  --patch:#B26A00; --patch-bg:#FCF1DF; --put:#7448C9; --put-bg:#F0EAFB;
+  --del:#C93A3F; --del-bg:#FCE8E8;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F1514; --surface:#161E1D; --sunken:#1C2625; --line:#2A3735;
+  --fg:#E4ECEA; --fg2:#BCC9C6; --muted:#8A9B97;
+  --accent:#3CC2AD; --accent-soft:#163430; --code-bg:#111A19; --code-fg:#D5E2DF;
+  --get:#7DB2F2; --get-bg:#172A40; --post:#5BCB97; --post-bg:#15302A;
+  --patch:#F0B460; --patch-bg:#352915; --put:#B79AF0; --put-bg:#2A2140;
+  --del:#F08A8E; --del-bg:#3A1C1E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1514; --surface:#161E1D; --sunken:#1C2625; --line:#2A3735;
+  --fg:#E4ECEA; --fg2:#BCC9C6; --muted:#8A9B97;
+  --accent:#3CC2AD; --accent-soft:#163430; --code-bg:#111A19; --code-fg:#D5E2DF;
+  --get:#7DB2F2; --get-bg:#172A40; --post:#5BCB97; --post-bg:#15302A;
+  --patch:#F0B460; --patch-bg:#352915; --put:#B79AF0; --put-bg:#2A2140;
+  --del:#F08A8E; --del-bg:#3A1C1E; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.65;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:var(--accent)}
+code,.mono{font-family:var(--f-mono);font-size:.86em}
+:not(pre)>code{background:var(--sunken);padding:1px 5px;border-radius:4px;color:var(--code-fg)}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:220px minmax(0,1fr);gap:40px;padding-block:40px 80px}
+@media (max-width:860px){.wrap{grid-template-columns:minmax(0,1fr);gap:24px;padding-block:24px 60px}}
+
+/* index */
+nav.idx{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);align-self:start;max-height:calc(100vh - 48px);overflow:auto;font-size:14px}
+@media (max-width:860px){nav.idx{position:static;max-height:none}}
+.brand{font-weight:700;font-size:15px;letter-spacing:-.01em;margin-bottom:4px}
+.brand b{color:var(--accent)}
+.idx-sub{color:var(--muted);font-size:12.5px;margin-bottom:20px}
+.idx-group{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px;font-weight:600}
+.idx ul{list-style:none;margin:0;padding:0;display:grid;gap:1px}
+.idx a{display:flex;justify-content:space-between;gap:8px;text-decoration:none;color:var(--fg2);padding:5px 10px;border-radius:6px}
+.idx a:hover,.idx a:focus-visible{background:var(--sunken);color:var(--fg);outline:none}
+.idx .n{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12.5px}
+@media (max-width:860px){.idx ul{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:2px}}
+
+/* header */
+header.top{display:grid;gap:14px;margin-bottom:36px}
+.eyebrow{font-size:12.5px;color:var(--accent);font-weight:600;letter-spacing:.04em}
+header.top h1{font-size:32px;font-weight:700;letter-spacing:-.02em}
+.lead{color:var(--fg2);max-width:68ch;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:8px 20px;color:var(--muted);font-size:13.5px}
+.meta span b{color:var(--fg2);font-weight:600}
+
+section.block{margin-bottom:48px;min-width:0}
+section.block>h2{font-size:22px;font-weight:700;letter-spacing:-.01em;margin-bottom:6px;scroll-margin-top:20px}
+.sec-lead{color:var(--muted);margin:0 0 18px;max-width:68ch}
+h3.sub{font-size:16px;font-weight:600;margin:26px 0 10px}
+
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;color:var(--muted);font-weight:600;background:var(--sunken);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+td.nowrap{white-space:nowrap}
+
+pre{margin:0;background:var(--code-bg);color:var(--code-fg);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow-x:auto;font-family:var(--f-mono);font-size:12.8px;line-height:1.55}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:700px){.two{grid-template-columns:minmax(0,1fr)}}
+.lbl{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px;letter-spacing:.03em}
+
+/* status flow */
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 6px}
+.flow .st{font-size:12.5px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--sunken);color:var(--fg2)}
+.flow .st.on{background:var(--accent-soft);color:var(--accent)}
+.flow .ar{color:var(--muted);font-size:12px}
+
+/* toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 18px}
+.toolbar input{flex:1 1 220px;min-width:0;font:inherit;font-size:14px;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg)}
+.toolbar input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg2);cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.chip:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;font-size:13px;padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg2);cursor:pointer}
+.btn:hover{color:var(--fg)}
+.count{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+
+/* summary table */
+.m{display:inline-block;min-width:56px;text-align:center;font-family:var(--f-mono);font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:5px}
+.m.GET{color:var(--get);background:var(--get-bg)}
+.m.POST{color:var(--post);background:var(--post-bg)}
+.m.PATCH{color:var(--patch);background:var(--patch-bg)}
+.m.PUT{color:var(--put);background:var(--put-bg)}
+.m.DELETE{color:var(--del);background:var(--del-bg)}
+.auth{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.prio{font-size:12px;font-weight:600;color:var(--muted);white-space:nowrap}
+.prio.p1{color:var(--accent)}
+.sum a{color:var(--fg);text-decoration:none}
+.sum a:hover{color:var(--accent);text-decoration:underline}
+.sum td.path{font-family:var(--f-mono);font-size:12.8px;white-space:nowrap}
+
+/* endpoint */
+.ep{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;scroll-margin-top:20px;min-width:0}
+.ep>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:14px 18px}
+.ep>summary::-webkit-details-marker{display:none}
+.ep>summary:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:12px}
+.ep .path{font-family:var(--f-mono);font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.ep .title{grid-column:2/4;color:var(--fg2);font-size:14px}
+.ep .tags{display:flex;gap:8px;align-items:center}
+.ep .chev{color:var(--muted);transition:transform .15s}
+.ep[open] .chev{transform:rotate(90deg)}
+.ep-body{padding:0 18px 18px;display:grid;gap:14px;border-top:1px solid var(--line);padding-top:16px;min-width:0}
+.ep-body p{margin:0;color:var(--fg2);max-width:72ch}
+.ep-body ul.notes{margin:0;padding-left:18px;color:var(--fg2);display:grid;gap:3px}
+.errs{display:flex;flex-wrap:wrap;gap:6px}
+.errs code{font-size:12px}
+.copy{font:inherit;font-size:12px;padding:3px 8px;border-radius:6px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.copy:hover{color:var(--fg)}
+.domain-h{font-size:18px;font-weight:700;margin:34px 0 4px;scroll-margin-top:20px}
+.domain-d{color:var(--muted);margin:0 0 14px;font-size:14px;max-width:70ch}
+.empty{color:var(--muted);padding:20px 0}
+.own{display:inline-block;margin-left:4px;font-size:12.5px;color:var(--fg2);background:var(--sunken);padding:1px 8px;border-radius:999px;white-space:nowrap}
+.ok{color:var(--post);font-weight:600}.fix{color:var(--patch);font-weight:600}.add{color:var(--get);font-weight:600}
+ul.plain{margin:0;padding-left:18px;display:grid;gap:4px;color:var(--fg2);max-width:76ch}
+@media (max-width:560px){
+  .ep>summary{grid-template-columns:auto minmax(0,1fr);padding:12px 14px}
+  .ep .tags{grid-column:1/3}
+  .ep .title{grid-column:1/3}
+  .ep-body{padding:14px}
+  header.top h1{font-size:26px}
+}
+@media (prefers-reduced-motion:reduce){.ep .chev{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="idx" aria-label="목차">
+    <div class="brand"><b>NEXT</b> 시흥 API</div>
+    <div class="idx-sub">v1.1 · 기획서 v3 검수 반영 · 2026.10.25</div>
+    <div class="idx-group">공통</div>
+    <ul>
+      <li><a href="#overview">기본 규칙</a></li>
+      <li><a href="#response">응답·에러 형식</a></li>
+      <li><a href="#enums">공통 enum</a></li>
+      <li><a href="#review">기획서 대조</a></li>
+      <li><a href="#summary">API 목록</a></li>
+    </ul>
+    <div class="idx-group">엔드포인트</div>
+    <ul id="idxDomains"></ul>
+    <div class="idx-group">서버</div>
+    <ul><li><a href="#batch">스케줄러·외부 API</a></li></ul>
+  </nav>
+
+  <main style="min-width:0">
+    <header class="top">
+      <div class="eyebrow">웹서비스프로그래밍 · 시흥시 지역연계 프로젝트 · 팀 NextStep</div>
+      <h1>NEXT 시흥 API 명세</h1>
+      <p class="lead">React 화면과 Spring Boot 서버가 주고받는 REST API를 정리한 문서입니다. 제안서의 1·2순위 기능(상태 등록, 로드맵, 정책 연결, 진행상태, 캘린더, 관리자, 맞춤 채용, 커뮤니티, 알림)을 모두 다루며, 5주차에 확정해 프론트엔드와 백엔드가 동시에 개발하는 기준으로 씁니다.</p>
+      <div class="meta">
+        <span><b>Base URL</b> <code>/api/v1</code></span>
+        <span><b>인증</b> JWT Bearer</span>
+        <span><b>형식</b> JSON (UTF-8)</span>
+        <span><b>엔드포인트</b> <span id="totalCount" class="mono">0</span>개</span>
+      </div>
+    </header>
+
+    <section class="block" id="overview">
+      <h2>기본 규칙</h2>
+      <p class="sec-lead">모든 API는 같은 응답 껍데기와 이름 규칙을 따릅니다. 신청 자체는 서비스 안에서 처리하지 않으므로, 정책 관련 응답에는 항상 공식 신청 URL과 마지막 정보 확인일이 들어갑니다.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>항목</th><th>규칙</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap">Base URL</td><td><code>/api/v1</code>, 관리자는 <code>/api/v1/admin</code></td></tr>
+          <tr><td class="nowrap">인증</td><td><code>Authorization: Bearer {accessToken}</code>. Access 토큰 30분, Refresh 토큰 14일. 만료 시 <code>TOKEN_EXPIRED</code>를 받고 재발급 API 호출</td></tr>
+          <tr><td class="nowrap">권한 표시</td><td><code>-</code> 로그인 불필요 · <code>U</code> 로그인 사용자 · <code>U?</code> 선택(로그인하면 내 진행상태가 함께 옴) · <code>A</code> 관리자(ADMIN)</td></tr>
+          <tr><td class="nowrap">날짜</td><td>날짜 <code>yyyy-MM-dd</code>, 일시 <code>yyyy-MM-dd'T'HH:mm:ss</code> (KST). D-day는 서버가 계산해 <code>dDay</code>(정수, 지났으면 음수)로 내려줌</td></tr>
+          <tr><td class="nowrap">이름</td><td>URL은 kebab-case 복수형 명사, JSON 필드는 camelCase, enum 값은 UPPER_SNAKE_CASE</td></tr>
+          <tr><td class="nowrap">ID</td><td>모든 리소스 ID는 Long. 경로 변수 이름은 <code>{policyId}</code>처럼 리소스명 + Id</td></tr>
+          <tr><td class="nowrap">우선순위</td><td>제안서 4장 기준. <b>1순위</b> 없으면 서비스가 성립하지 않는 기능, <b>2순위</b> 기간 내 반드시 구현할 기능, <b>3순위</b> 여유가 있으면 추가할 기능(이 명세에는 1개만 포함)</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="block" id="response">
+      <h2>응답·에러 형식</h2>
+      <p class="sec-lead">성공과 실패 모두 같은 4개 필드를 씁니다. 화면은 <code>success</code>로 분기하고, 에러 처리는 <code>code</code>를 기준으로 합니다.</p>
+      <div class="two">
+        <div><div class="lbl">성공</div><pre>{
+  "success": true,
+  "code": "OK",
+  "message": "요청이 성공했습니다.",
+  "data": { ... }
+}</pre></div>
+        <div><div class="lbl">실패 (입력값 오류 예시)</div><pre>{
+  "success": false,
+  "code": "INVALID_INPUT",
+  "message": "입력값을 확인해 주세요.",
+  "data": {
+    "errors": [
+      { "field": "email", "reason": "이메일 형식이 아닙니다." }
+    ]
+  }
+}</pre></div>
+      </div>
+      <h3 class="sub">페이지네이션</h3>
+      <p class="sec-lead" style="margin-bottom:10px">목록 API는 <code>page</code>(0부터), <code>size</code>(기본 20, 최대 50)를 받고 <code>data</code>를 아래 형태로 돌려줍니다.</p>
+      <pre>{ "content": [ ... ], "page": 0, "size": 20, "totalElements": 135, "totalPages": 7, "hasNext": true }</pre>
+      <h3 class="sub">공통 에러 코드</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>HTTP</th><th>code</th><th>상황</th></tr></thead>
+        <tbody>
+          <tr><td>400</td><td><code>INVALID_INPUT</code></td><td>필수값 누락, 형식 오류. 실패 필드는 <code>data.errors</code></td></tr>
+          <tr><td>400</td><td><code>CONTACT_INFO_DETECTED</code></td><td>게시글에 전화번호·이메일 같은 연락처가 들어 있음</td></tr>
+          <tr><td>401</td><td><code>UNAUTHORIZED</code></td><td>토큰 없음 또는 잘못된 토큰</td></tr>
+          <tr><td>401</td><td><code>TOKEN_EXPIRED</code></td><td>Access 토큰 만료</td></tr>
+          <tr><td>401</td><td><code>LOGIN_FAILED</code></td><td>이메일 또는 비밀번호 불일치</td></tr>
+          <tr><td>403</td><td><code>FORBIDDEN</code></td><td>권한 없음 (남의 글 수정, 일반 사용자의 관리자 API 호출)</td></tr>
+          <tr><td>403</td><td><code>ONBOARDING_REQUIRED</code></td><td>상태 등록 전에 로드맵·맞춤 채용 호출</td></tr>
+          <tr><td>404</td><td><code>*_NOT_FOUND</code></td><td><code>POLICY_NOT_FOUND</code>, <code>JOB_NOT_FOUND</code>, <code>POST_NOT_FOUND</code> 등</td></tr>
+          <tr><td>409</td><td><code>DUPLICATE_EMAIL</code></td><td>이미 가입한 이메일</td></tr>
+          <tr><td>409</td><td><code>ALREADY_EXISTS</code></td><td>이미 로드맵에 추가했거나 저장·신고한 항목</td></tr>
+          <tr><td>422</td><td><code>POLICY_ENDED</code></td><td>종료된 정책을 로드맵에 추가하려 함</td></tr>
+          <tr><td>500</td><td><code>INTERNAL_ERROR</code></td><td>서버 오류</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="block" id="enums">
+      <h2>공통 enum</h2>
+      <p class="sec-lead">화면 칩과 배지에 쓰는 값입니다. 화면 표시명은 프론트에서 매핑하고, 서버는 영문 값만 주고받습니다.</p>
+      <div class="lbl">진행상태 ProgressStatus</div>
+      <div class="flow" aria-label="진행상태 순서">
+        <span class="st">TO_CHECK 확인 필요</span><span class="ar">→</span>
+        <span class="st">INTERESTED 관심</span><span class="ar">→</span>
+        <span class="st">PLANNED 신청 예정</span><span class="ar">→</span>
+        <span class="st">APPLIED 신청 완료</span><span class="ar">→</span>
+        <span class="st">IN_PROGRESS 참여 중</span><span class="ar">→</span>
+        <span class="st on">COMPLETED 완료</span>
+      </div>
+      <p class="sec-lead" style="margin-top:6px">사용자가 직접 바꾸며 단계를 건너뛰거나 되돌리는 것도 허용합니다. <code>COMPLETED</code>로 바뀔 때만 응답에 <code>suggestReview: true</code>가 와서 1분 후기 작성을 제안합니다.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>enum</th><th>값 (화면 표시명)</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap"><code>LifeStage</code><br>현재 상황</td><td><code>ENROLLED</code> 대학 재학 · <code>GRADUATING</code> 졸업 예정 · <code>ON_LEAVE</code> 휴학 · <code>MILITARY</code> 군 복무·전역 · <code>JOB_SEEKING</code> 취업 준비 · <code>FIRST_JOB</code> 첫 취업 · <code>INDEPENDENCE</code> 독립 준비</td></tr>
+          <tr><td class="nowrap"><code>InterestField</code><br>관심분야</td><td><code>EMPLOYMENT</code> 취업 · <code>EDUCATION</code> 교육 · <code>HOUSING</code> 주거 · <code>FINANCE</code> 금융 · <code>COUNSELING</code> 상담 · <code>CULTURE_LIFE</code> 문화·생활</td></tr>
+          <tr><td class="nowrap"><code>JobCategory</code><br>직무</td><td><code>OFFICE</code> 사무 · <code>IT</code> IT·개발 · <code>MANUFACTURING</code> 생산·제조 · <code>SERVICE</code> 서비스 · <code>DESIGN</code> 디자인 · <code>ETC</code> 기타</td></tr>
+          <tr><td class="nowrap"><code>Region</code><br>지역</td><td><code>SIHEUNG</code> 시흥 · <code>ANSAN</code> 안산 · <code>INCHEON</code> 인천 · <code>BUCHEON</code> 부천 · <code>GWANGMYEONG</code> 광명</td></tr>
+          <tr><td class="nowrap"><code>Education</code><br>학력</td><td><code>HIGH_SCHOOL</code> 고졸 · <code>COLLEGE</code> 전문대졸 · <code>UNIVERSITY</code> 대졸 · <code>ANY</code> 무관</td></tr>
+          <tr><td class="nowrap"><code>EmploymentType</code><br>고용형태</td><td><code>FULL_TIME</code> 정규직 · <code>CONTRACT</code> 계약직 · <code>INTERN</code> 인턴 · <code>PART_TIME</code> 시간제</td></tr>
+          <tr><td class="nowrap"><code>RecruitStatus</code><br>모집상태</td><td><code>UPCOMING</code> 접수 예정 · <code>OPEN</code> 접수 중 · <code>CLOSED</code> 마감 · <code>ENDED</code> 종료(관리자 처리)</td></tr>
+          <tr><td class="nowrap"><code>PolicySource</code><br>정보 출처</td><td><code>ONTONG</code> 온통청년 API · <code>ADMIN</code> 관리자 직접 등록(시흥 지역 프로그램)</td></tr>
+          <tr><td class="nowrap"><code>PostType</code><br>게시글 종류</td><td><code>PASS_REVIEW</code> 합격 후기 · <code>PROGRAM_REVIEW</code> 참여 후기 · <code>PORTFOLIO</code> 포트폴리오</td></tr>
+          <tr><td class="nowrap"><code>PrepPeriod</code><br>준비 기간</td><td><code>WEEK_1</code> 1주 이내 · <code>MONTH_1</code> 1개월 · <code>MONTH_3</code> 3개월 · <code>MONTH_6_PLUS</code> 6개월 이상</td></tr>
+          <tr><td class="nowrap"><code>ReportReason</code><br>신고 사유</td><td><code>PERSONAL_INFO</code> 개인정보 노출 · <code>SPAM</code> 광고 · <code>ABUSE</code> 욕설·비방 · <code>FALSE_INFO</code> 허위 정보 · <code>ETC</code> 기타</td></tr>
+          <tr><td class="nowrap"><code>EventType</code><br>일정 종류</td><td><code>APPLY_START</code> 접수 시작 · <code>APPLY_END</code> 접수 마감 · <code>COUNSELING</code> 상담 · <code>PARTICIPATION</code> 참여일 · <code>JOB_DEADLINE</code> 채용 마감 · <code>CUSTOM</code> 직접 추가</td></tr>
+          <tr><td class="nowrap"><code>NotificationType</code><br>알림 종류</td><td><code>NEW_JOB</code> 새 맞춤 공고 · <code>DEADLINE</code> 마감 임박 · <code>NEW_REVIEW</code> 관심 항목 새 후기 · <code>SYSTEM</code> 공지</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section class="block" id="review">
+      <h2>기획서 대조</h2>
+      <p class="sec-lead">제안서 v3(NEXT시흥_제안서_NextStep_v3)의 1·2순위 기능 9개와 재방문 구조(3-3), 운영 지표(8-3)가 모두 API에 대응합니다. 아래 표의 담당·주차는 제안서 7장 일정과 업무 분담을 따랐습니다.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>제안서 기능</th><th>순위</th><th>대응 API</th><th>백엔드 담당 · 주차</th></tr></thead>
+        <tbody>
+          <tr><td>① 사용자 상태 등록</td><td>1</td><td><code>PUT /users/me/profile</code>, 회원가입·로그인</td><td class="nowrap">한동혁 · 6주차</td></tr>
+          <tr><td>② NEXT 로드맵 생성</td><td>1</td><td><code>GET /roadmaps/me</code>, <code>GET /home/summary</code>, 템플릿 관리</td><td class="nowrap">강준 · 8주차</td></tr>
+          <tr><td>③ 정책·프로그램 연결</td><td>1</td><td><code>GET /policies</code>, <code>GET /policies/{policyId}</code>, <code>POST /roadmaps/me/items</code></td><td class="nowrap">강준 · 7주차</td></tr>
+          <tr><td>④ 진행상태 관리</td><td>1</td><td><code>PATCH /roadmap-items/{itemId}/status</code>, 활동 기록</td><td class="nowrap">한동혁 · 9주차</td></tr>
+          <tr><td>⑤ NEXT 캘린더</td><td>2</td><td><code>/calendar/events</code> 4개</td><td class="nowrap">한동혁 · 9주차</td></tr>
+          <tr><td>⑥ 관리자 정책·프로그램 관리</td><td>2</td><td><code>/admin/policies</code> 5개 (등록·수정·종료·확인일 갱신)</td><td class="nowrap">강준 · 7주차</td></tr>
+          <tr><td>⑦ 맞춤 채용공고</td><td>2</td><td><code>/jobs</code> 5개, 고용24 수집 스케줄러</td><td class="nowrap">강준 · 10주차</td></tr>
+          <tr><td>⑧ 경험 공유 커뮤니티</td><td>2</td><td><code>/posts</code> 6개(신고 포함), 관리자 숨김</td><td class="nowrap">한동혁 · 11주차</td></tr>
+          <tr><td>⑨ 알림 센터</td><td>2</td><td><code>/notifications</code> 4개, 알림 생성 배치</td><td class="nowrap">한동혁 · 11주차</td></tr>
+          <tr><td>3-3 내 기록 · 8-3 운영 지표</td><td>2</td><td><code>GET /roadmaps/me/history</code>, <code>GET /users/me/posts</code>, <code>GET /admin/stats</code></td><td class="nowrap">한동혁 · 강준</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3 class="sub">v1.1에서 고친 것</h3>
+      <ul class="plain">
+        <li><span class="fix">수정</span> 현재 상황 enum: 제안서 표기대로 '군 복무 및 전역'을 하나(<code>MILITARY</code>)로 합침</li>
+        <li><span class="fix">삭제</span> 게시글 좋아요 API 2개와 인기순 정렬: 제안서에 없는 기능이고, '후기 기반 인기 순위'는 3순위</li>
+        <li><span class="fix">수정</span> <code>DELETE /roadmap-items/{itemId}</code>를 3순위로 표시: '로드맵 직접 편집'은 제안서 3순위</li>
+        <li><span class="fix">수정</span> 회원가입 <code>birthYear</code>를 선택값으로 바꿈: 상태 정보만 받는다는 제안서 원칙에 맞춤</li>
+        <li><span class="add">추가</span> <code>GET /users/me/posts</code>: 3-3 '내가 남긴 후기'</li>
+        <li><span class="add">추가</span> <code>GET /admin/stats</code>: 8-3 운영 지표(7일 재방문율, 관심 공고 저장 수, 후기 수), 8-2 프로그램별 관심 등록 수</li>
+        <li><span class="add">추가</span> 관리자 정책 목록에 등록일(<code>createdAt</code>): 4-1 ⑥ 관리 항목</li>
+      </ul>
+
+      <h3 class="sub">제안서에 없어 명세에서 정한 값 (팀 확인 필요)</h3>
+      <ul class="plain">
+        <li>인증 방식 JWT, Access 30분 · Refresh 14일</li>
+        <li>수집 시각: 정책 매일 03:00, 채용공고 매일 04:00 (제안서는 '하루 1회'까지만 정함)</li>
+        <li>마감 알림 시점 D-7 · D-3 · D-1, 신고 5건 자동 숨김, 마지막 확인일 30일 경과 시 '확인 필요'</li>
+        <li>진행상태는 단계를 건너뛰거나 되돌리는 것을 허용</li>
+        <li>관심분야에 '문화·생활'(<code>CULTURE_LIFE</code>) 추가: 제안서 목록은 '취업, 교육, 주거, 금융, 상담 등'</li>
+        <li>로드맵 템플릿 관리 API와 외부 데이터 수동 수집 API: 제안서의 '사전에 정의·검증된 템플릿'과 시연 준비를 위해 추가</li>
+        <li>회원 탈퇴 API</li>
+      </ul>
+    </section>
+
+    <section class="block" id="summary">
+      <h2>API 목록</h2>
+      <p class="sec-lead">경로를 누르면 아래 상세로 이동합니다. 검색은 경로, 설명, 에러 코드를 모두 찾습니다.</p>
+      <div class="toolbar">
+        <label for="q" class="mono" style="position:absolute;left:-9999px">검색</label>
+        <input id="q" type="search" placeholder="경로나 기능으로 찾기 (예: bookmark, 후기, 마감)" autocomplete="off">
+        <div class="chips" id="methodChips" role="group" aria-label="메서드 필터"></div>
+        <span class="count" id="shown"></span>
+      </div>
+      <div class="tbl sum"><table>
+        <thead><tr><th>메서드</th><th>경로</th><th>기능</th><th>권한</th><th>순위</th></tr></thead>
+        <tbody id="sumBody"></tbody>
+      </table></div>
+    </section>
+
+    <section class="block" id="endpoints">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <h2>엔드포인트 상세</h2>
+        <div style="display:flex;gap:8px"><button class="btn" id="openAll" type="button">모두 펼치기</button><button class="btn" id="closeAll" type="button">모두 접기</button></div>
+      </div>
+      <div id="epList"></div>
+    </section>
+
+    <section class="block" id="batch">
+      <h2>스케줄러·외부 API 연동</h2>
+      <p class="sec-lead">Spring Scheduler가 외부 데이터를 정기 수집하고 알림을 만듭니다. 인증키 승인 전에는 같은 테이블에 샘플 데이터를 넣어 두고 개발하며, 화면 쪽 API는 출처와 상관없이 그대로 동작합니다.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>작업</th><th>주기</th><th>처리 내용</th><th>결과</th></tr></thead>
+        <tbody>
+          <tr><td class="nowrap">청년정책 수집</td><td class="nowrap mono">매일 03:00</td><td>온통청년 Open API(XML)에서 전국·경기도 청년정책을 받아 <code>policy</code>에 저장. 같은 정책 ID는 갱신, 접수기간이 지난 정책은 <code>CLOSED</code></td><td><code>source=ONTONG</code>, <code>lastVerifiedAt</code> 갱신</td></tr>
+          <tr><td class="nowrap">채용공고 수집</td><td class="nowrap mono">매일 04:00</td><td>고용24 채용정보 Open API에서 시흥·인접 지역 신입 가능 공고 수집. 지역·학력·경력·고용형태·마감일을 정해진 칸으로 정리하고 직무명은 직무 사전으로 통일(예: 웹개발, 백엔드 → <code>IT</code>)</td><td><code>job_posting</code> 저장, 공고별 도움 되는 정책 태그 매칭</td></tr>
+          <tr><td class="nowrap">새 맞춤 공고 알림</td><td class="nowrap mono">채용 수집 직후</td><td>사용자별 저장 조건과 비교해 마지막 접속 이후 새로 맞는 공고 수를 계산</td><td><code>NEW_JOB</code> 알림 1건 (예: "조건에 맞는 새 공고 3건")</td></tr>
+          <tr><td class="nowrap">마감 임박 알림</td><td class="nowrap mono">매일 09:00</td><td>로드맵 항목·관심 공고·직접 일정 중 마감이 D-7, D-3, D-1인 것</td><td><code>DEADLINE</code> 알림</td></tr>
+          <tr><td class="nowrap">새 후기 알림</td><td class="nowrap mono">게시글 등록 시</td><td>글에 연결된 정책·공고를 로드맵이나 관심 저장에 둔 사용자에게 발송 (작성자 본인 제외)</td><td><code>NEW_REVIEW</code> 알림</td></tr>
+          <tr><td class="nowrap">오래된 정보 점검</td><td class="nowrap mono">매주 월 09:00</td><td>관리자 등록 정책 중 마지막 확인일이 30일을 넘은 것을 표시</td><td>관리자 목록 <code>stale=true</code> 필터에 노출</td></tr>
+        </tbody>
+      </table></div>
+      <h3 class="sub">로드맵 생성 규칙</h3>
+      <p class="sec-lead">AI 판단이 아니라 규칙 기반입니다. 관리자가 만든 로드맵 템플릿 중 사용자의 <code>LifeStage</code>와 <code>InterestField</code>가 가장 많이 겹치는 것을 고르고, 단계마다 연결된 정책 중 <code>ENDED</code>가 아닌 것을 로드맵 항목(<code>TO_CHECK</code>)으로 복사합니다. 상황을 바꾸면 기존 로드맵은 <code>archived=true</code>로 남기고 새 템플릿으로 다시 만듭니다.</p>
+    </section>
+  </main>
+</div>
+
+<script>
+const DOMAINS = [
+  {id:"auth", name:"인증·회원", own:"한동혁 · 6주차", desc:"이메일 가입과 JWT 로그인. 민감정보(주민번호, 소득)는 받지 않습니다."},
+  {id:"profile", name:"상태 등록·온보딩", own:"한동혁 · 6주차", desc:"현재 상황, 관심분야, 희망 채용 조건을 선택형으로 등록합니다. 등록하면 로드맵이 바로 만들어집니다."},
+  {id:"roadmap", name:"로드맵·진행상태", own:"강준(로드맵 8주차) · 한동혁(진행상태 9주차)", desc:"메인 화면 데이터와 로드맵 항목의 6단계 진행상태를 다룹니다."},
+  {id:"policy", name:"정책·프로그램", own:"강준 · 7주차", desc:"정책 목록과 상세. 상세에는 공식 신청 URL, 마지막 확인일, 관련 후기와 채용공고가 함께 옵니다."},
+  {id:"job", name:"맞춤 채용", own:"강준 · 10주차", desc:"고용24 공고를 사용자 조건으로 거른 목록과, 공고마다 도움 되는 정책 연결."},
+  {id:"post", name:"커뮤니티", own:"한동혁 · 11주차", desc:"합격 후기, 참여 후기, 포트폴리오. 글은 정책·공고·직무 태그로 연결됩니다."},
+  {id:"calendar", name:"NEXT 캘린더", own:"한동혁 · 9주차", desc:"로드맵 항목과 관심 공고의 일정을 한 캘린더로 모읍니다."},
+  {id:"noti", name:"알림 센터", own:"한동혁 · 11주차", desc:"서비스 안 알림. 이메일·푸시는 3순위라 이번 범위에 없습니다."},
+  {id:"admin", name:"관리자", own:"강준 · 7주차 (수집 10주차)", desc:"정책·프로그램 관리, 로드맵 템플릿, 신고 처리, 외부 데이터 수동 수집."}
+];
+
+const policySummary = {policyId:12, title:"청년 직무역량 아카데미", field:"EMPLOYMENT", agency:"시흥시청소년청년재단", applyStartDate:"2026-10-20", applyEndDate:"2026-11-05", recruitStatus:"OPEN", dDay:11};
+
+const E = [
+/* ---------- auth ---------- */
+{d:"auth",m:"POST",p:"/auth/signup",a:"-",pr:1,t:"회원가입",
+ desc:"이메일, 비밀번호, 닉네임으로 가입합니다. 가입 직후 onboardingCompleted는 false이고, 화면은 온보딩으로 이동합니다.",
+ body:{email:"a@next-siheung.kr",password:"next1234!",nickname:"A",birthYear:2003,agreeTerms:true,agreePrivacy:true},
+ res:{userId:1,email:"a@next-siheung.kr",nickname:"A",onboardingCompleted:false},
+ notes:["비밀번호 8~20자, 영문·숫자·특수문자 포함","birthYear는 선택값. 19~24세 대상 안내용이며 범위 밖이어도 가입 허용","주민등록번호·소득 정보는 받지 않음(제안서 4-1 ①)"],
+ err:["INVALID_INPUT","DUPLICATE_EMAIL"],status:201},
+{d:"auth",m:"POST",p:"/auth/login",a:"-",pr:1,t:"로그인",
+ desc:"Access·Refresh 토큰을 발급합니다. onboardingCompleted가 false면 화면은 온보딩으로 보냅니다.",
+ body:{email:"a@next-siheung.kr",password:"next1234!"},
+ res:{accessToken:"eyJhbGciOi...",refreshToken:"eyJhbGciOi...",expiresIn:1800,user:{userId:1,nickname:"A",role:"USER",onboardingCompleted:true}},
+ err:["LOGIN_FAILED"]},
+{d:"auth",m:"POST",p:"/auth/refresh",a:"-",pr:1,t:"토큰 재발급",
+ desc:"Refresh 토큰으로 새 토큰 쌍을 받습니다. Refresh 토큰도 함께 교체(rotation)합니다.",
+ body:{refreshToken:"eyJhbGciOi..."},res:{accessToken:"eyJhbGciOi...",refreshToken:"eyJhbGciOi...",expiresIn:1800},
+ err:["UNAUTHORIZED"]},
+{d:"auth",m:"POST",p:"/auth/logout",a:"U",pr:1,t:"로그아웃",desc:"서버에 저장된 Refresh 토큰을 삭제합니다.",res:null,status:204},
+{d:"auth",m:"GET",p:"/users/me",a:"U",pr:1,t:"내 계정 정보",
+ desc:"헤더 프로필과 마이페이지에 쓰는 기본 정보입니다.",
+ res:{userId:1,email:"a@next-siheung.kr",nickname:"A",role:"USER",onboardingCompleted:true,createdAt:"2026-10-25T10:12:00"}},
+{d:"auth",m:"DELETE",p:"/users/me",a:"U",pr:2,t:"회원 탈퇴",
+ desc:"계정과 로드맵, 일정, 알림을 삭제합니다. 작성한 게시글은 '탈퇴한 사용자'로 익명 처리해 남깁니다.",res:null,status:204},
+
+/* ---------- profile ---------- */
+{d:"profile",m:"PUT",p:"/users/me/profile",a:"U",pr:1,t:"상태·관심분야 등록 (온보딩 완료)",
+ desc:"온보딩 3단계에서 고른 값을 한 번에 저장하고, 규칙에 맞는 로드맵 템플릿으로 내 로드맵을 만듭니다. 이미 등록했다면 값만 수정하고 로드맵은 그대로 둡니다(상황 변경은 별도 API).",
+ body:{lifeStages:["GRADUATING","JOB_SEEKING"],interests:["EMPLOYMENT","HOUSING"],jobPreference:{regions:["SIHEUNG","ANSAN"],education:"UNIVERSITY",careerLevel:"NEW",jobCategories:["OFFICE","IT"],employmentTypes:["FULL_TIME"]}},
+ res:{onboardingCompleted:true,roadmapId:31,templateName:"졸업 예정 · 취업 준비 · 취업/주거"},
+ notes:["lifeStages, interests는 1개 이상 필수","jobPreference는 생략 가능(맞춤 채용에서 나중에 입력)"],
+ err:["INVALID_INPUT"]},
+{d:"profile",m:"GET",p:"/users/me/profile",a:"U",pr:1,t:"내 상태·관심분야 조회",
+ desc:"메인 상단 요약의 상태 배지·관심분야 칩과 조건 수정 화면에 씁니다.",
+ res:{lifeStages:["GRADUATING","JOB_SEEKING"],interests:["EMPLOYMENT","HOUSING"],jobPreference:{regions:["SIHEUNG","ANSAN"],education:"UNIVERSITY",careerLevel:"NEW",jobCategories:["OFFICE","IT"],employmentTypes:["FULL_TIME"]}}},
+{d:"profile",m:"PATCH",p:"/users/me/job-preference",a:"U",pr:2,t:"채용 조건 수정",
+ desc:"맞춤 채용 화면의 '조건 수정'에서 호출합니다. 보낸 필드만 바뀝니다.",
+ body:{regions:["SIHEUNG","ANSAN","INCHEON"],jobCategories:["IT"]},
+ res:{regions:["SIHEUNG","ANSAN","INCHEON"],education:"UNIVERSITY",careerLevel:"NEW",jobCategories:["IT"],employmentTypes:["FULL_TIME"]}},
+{d:"profile",m:"POST",p:"/users/me/life-stage-change",a:"U",pr:1,t:"상황 변경 (새 로드맵)",
+ desc:"졸업 예정 → 첫 취업처럼 상황이 바뀌면 기존 로드맵을 활동 기록으로 보관하고 새 로드맵을 만듭니다. 상황 변경 모달의 확인 버튼이 호출합니다.",
+ body:{lifeStages:["FIRST_JOB"],interests:["HOUSING","FINANCE"]},
+ res:{archivedRoadmapId:31,newRoadmapId:47,templateName:"첫 취업 · 주거/금융",suggestReview:true},
+ notes:["FIRST_JOB으로 바뀌면 suggestReview: true → 화면이 합격 후기 작성을 제안"]},
+
+/* ---------- roadmap ---------- */
+{d:"roadmap",m:"GET",p:"/home/summary",a:"U",pr:1,t:"메인 요약 (다음 할 일 · 다가오는 마감)",
+ desc:"내 로드맵 화면의 상단 요약 카드와 오른쪽 패널을 한 번에 채웁니다. 메인에는 이 두 가지만 보여준다는 설계 원칙에 맞춘 API입니다.",
+ res:{nickname:"A",lifeStages:["GRADUATING","JOB_SEEKING"],interests:["EMPLOYMENT","HOUSING"],
+   progress:{rate:40,completed:2,inProgress:3,remaining:5},
+   nextActions:[{itemId:205,policyId:12,title:"청년 직무역량 아카데미",status:"PLANNED",actionLabel:"공식 사이트에서 신청하기",dDay:11},{itemId:209,policyId:18,title:"청년 마음건강 상담",status:"INTERESTED",actionLabel:"상담 일정 확인하기",dDay:null}],
+   upcomingDeadlines:[{type:"APPLY_END",title:"청년 자격증 응시료 지원",date:"2026-10-28",dDay:3,sourceType:"POLICY",sourceId:21},{type:"JOB_DEADLINE",title:"(주)시흥테크 사무직 신입",date:"2026-11-01",dDay:7,sourceType:"JOB",sourceId:5512}],
+   newJobCount:3,unreadNotificationCount:4},
+ notes:["nextActions 최대 3개: 마감이 가까운 PLANNED → INTERESTED → TO_CHECK 순","upcomingDeadlines 최대 5개, dDay 0~14 범위"],
+ err:["ONBOARDING_REQUIRED"]},
+{d:"roadmap",m:"GET",p:"/roadmaps/me",a:"U",pr:1,t:"내 로드맵 조회",
+ desc:"세로 타임라인에 그릴 단계와 단계별 정책 카드를 돌려줍니다. currentStep은 미완료 항목이 있는 첫 단계입니다.",
+ res:{roadmapId:31,templateName:"졸업 예정 · 취업 준비 · 취업/주거",currentStep:2,progress:{rate:40,completed:2,inProgress:3,remaining:5},
+   steps:[{stepOrder:1,title:"진로·취업 상담",completed:true,items:[{itemId:201,policyId:7,title:"청년스테이션 진로 상담",agency:"시흥 청년스테이션",status:"COMPLETED",applyEndDate:null,dDay:null,applyUrl:"https://..."}]},
+     {stepOrder:2,title:"직무역량 프로그램",completed:false,items:[{itemId:205,policyId:12,title:"청년 직무역량 아카데미",agency:"시흥시청소년청년재단",status:"PLANNED",applyStartDate:"2026-10-20",applyEndDate:"2026-11-05",dDay:11,recruitStatus:"OPEN",applyUrl:"https://..."}]},
+     {stepOrder:3,title:"취업지원사업",completed:false,items:[]},{stepOrder:4,title:"주거지원",completed:false,items:[]},{stepOrder:5,title:"금융·생활지원",completed:false,items:[]}]},
+ err:["ONBOARDING_REQUIRED"]},
+{d:"roadmap",m:"PATCH",p:"/roadmap-items/{itemId}/status",a:"U",pr:1,t:"진행상태 변경",
+ desc:"진행상태 배지 드롭다운에서 호출합니다. 바뀐 진행률을 같이 돌려주므로 화면은 다시 조회하지 않아도 됩니다.",
+ path:[["itemId","Long","로드맵 항목 ID"]],
+ body:{status:"COMPLETED"},
+ res:{itemId:205,status:"COMPLETED",progress:{rate:50,completed:3,inProgress:2,remaining:5},suggestReview:true},
+ notes:["본인 로드맵 항목만 변경 가능","suggestReview는 COMPLETED로 바뀔 때만 true"],
+ err:["ROADMAP_ITEM_NOT_FOUND","FORBIDDEN"]},
+{d:"roadmap",m:"POST",p:"/roadmaps/me/items",a:"U",pr:1,t:"로드맵에 정책 추가 (관심 등록)",
+ desc:"제안서 3-1 '프로그램을 개인 로드맵에 추가'에 해당합니다. 정책 상세에서 로드맵에 없는 정책의 진행상태를 처음 고를 때 호출합니다. 템플릿 단계 중 정책 분야가 맞는 단계에 들어가고, 접수 시작·마감일이 캘린더에 자동 등록됩니다.",
+ body:{policyId:21,status:"INTERESTED"},
+ res:{itemId:230,policyId:21,stepOrder:3,status:"INTERESTED",calendarEventIds:[880,881]},
+ err:["POLICY_NOT_FOUND","ALREADY_EXISTS","POLICY_ENDED"],status:201},
+{d:"roadmap",m:"DELETE",p:"/roadmap-items/{itemId}",a:"U",pr:3,t:"로드맵 항목 삭제",
+ desc:"직접 추가한 항목만 뺍니다. 제안서에서 '로드맵 직접 편집'은 3순위라, 2순위까지 끝난 뒤 구현합니다. 연결된 캘린더 일정도 함께 지웁니다.",path:[["itemId","Long","로드맵 항목 ID"]],res:null,status:204,
+ err:["ROADMAP_ITEM_NOT_FOUND","FORBIDDEN"]},
+{d:"roadmap",m:"GET",p:"/roadmaps/me/history",a:"U",pr:2,t:"지난 로드맵 (활동 기록)",
+ desc:"상황 변경으로 보관된 로드맵 목록입니다. 상세는 /roadmaps/{roadmapId}로 같은 형식을 받습니다.",
+ res:[{roadmapId:31,templateName:"졸업 예정 · 취업 준비 · 취업/주거",archivedAt:"2027-02-10T14:00:00",progressRate:80,completedCount:8}]},
+
+/* ---------- policy ---------- */
+{d:"policy",m:"GET",p:"/policies",a:"U?",pr:1,t:"정책·프로그램 목록",
+ desc:"분야·모집상태·키워드로 정책을 찾습니다. 로그인하면 각 항목에 내 진행상태(myStatus)가 함께 옵니다.",
+ query:[["field","InterestField","N","분야"],["recruitStatus","RecruitStatus","N","기본값 OPEN, UPCOMING 둘 다"],["keyword","String","N","정책명·기관명 검색"],["sort","String","N","deadline(기본) · latest"],["page, size","Integer","N","페이지"]],
+ res:{content:[Object.assign({},policySummary,{myStatus:"PLANNED"})],page:0,size:20,totalElements:48,totalPages:3,hasNext:true}},
+{d:"policy",m:"GET",p:"/policies/{policyId}",a:"U?",pr:1,t:"정책·프로그램 상세",
+ desc:"상세 화면 한 장에 필요한 데이터를 모두 줍니다. 관련 후기는 최신 3개, 연결 채용공고는 2개까지입니다.",
+ path:[["policyId","Long","정책 ID"]],
+ res:{policyId:12,title:"청년 직무역량 아카데미",field:"EMPLOYMENT",agency:"시흥시청소년청년재단",target:"시흥시 거주 19~24세 미취업 청년",content:"직무별 실무 교육 8주 과정, 수료 시 현장실습 연계",applyStartDate:"2026-10-20",applyEndDate:"2026-11-05",dDay:11,recruitStatus:"OPEN",contact:"031-000-0000",
+   source:"ADMIN",sourceUrl:"https://...",applyUrl:"https://...",lastVerifiedAt:"2026-10-20",
+   myItem:{itemId:205,status:"PLANNED"},
+   reviews:[{postId:301,type:"PROGRAM_REVIEW",rating:5,oneLiner:"실습 연계까지 돼서 좋았어요",prepPeriod:"MONTH_1",authorStage:"GRADUATING",createdAt:"2026-09-30T20:11:00"}],reviewCount:7,
+   relatedJobs:[{jobId:5512,company:"(주)시흥테크",title:"사무직 신입",dDay:7}]},
+ notes:["비로그인이면 myItem은 null","myItem이 null이면 상태 드롭다운 선택 시 POST /roadmaps/me/items 호출"],
+ err:["POLICY_NOT_FOUND"]},
+{d:"policy",m:"GET",p:"/policies/{policyId}/reviews",a:"-",pr:2,t:"정책 관련 후기 목록",
+ desc:"상세의 '후기 더 보기'. 응답 항목 형식은 커뮤니티 목록과 같습니다.",
+ path:[["policyId","Long","정책 ID"]],query:[["page, size","Integer","N","페이지"]],
+ res:{content:["/* GET /posts 항목과 동일 */"],page:0,size:20,totalElements:7,totalPages:1,hasNext:false}},
+
+/* ---------- job ---------- */
+{d:"job",m:"GET",p:"/jobs/recommended",a:"U",pr:2,t:"맞춤 채용공고 목록",
+ desc:"저장된 채용 조건과 일치하는 공고를 돌려줍니다. 공고마다 '이 공고에 도움 되는 지원'과 그 정책의 내 진행상태가 붙어 옵니다.",
+ query:[["sort","String","N","deadline(기본) · latest"],["page, size","Integer","N","페이지"]],
+ res:{appliedFilter:{regions:["SIHEUNG","ANSAN"],education:"UNIVERSITY",careerLevel:"NEW",jobCategories:["OFFICE","IT"],employmentTypes:["FULL_TIME"]},
+   content:[{jobId:5512,company:"(주)시흥테크",title:"사무직 신입 채용",region:"SIHEUNG",education:"UNIVERSITY",careerLevel:"NEW",employmentType:"FULL_TIME",jobCategory:"OFFICE",deadline:"2026-11-01",dDay:7,bookmarked:false,isNew:true,
+     helpfulPolicies:[{policyId:21,title:"청년 자격증 응시료 지원",myStatus:"INTERESTED"}]}],
+   page:0,size:20,totalElements:23,totalPages:2,hasNext:true,dataSource:"고용24 채용정보"},
+ notes:["isNew: 마지막 접속 이후 새로 들어온 공고"],
+ err:["ONBOARDING_REQUIRED"]},
+{d:"job",m:"GET",p:"/jobs/{jobId}",a:"U?",pr:2,t:"채용공고 상세",
+ desc:"공고 원문 링크와 함께, 도움 되는 정책과 같은 직무의 합격 후기를 줍니다.",
+ path:[["jobId","Long","공고 ID"]],
+ res:{jobId:5512,company:"(주)시흥테크",title:"사무직 신입 채용",region:"SIHEUNG",address:"경기 시흥시 정왕동",education:"UNIVERSITY",careerLevel:"NEW",employmentType:"FULL_TIME",jobCategory:"OFFICE",salary:"회사 내규",deadline:"2026-11-01",dDay:7,originalUrl:"https://www.work24.go.kr/...",bookmarked:true,
+   helpfulPolicies:[{policyId:21,title:"청년 자격증 응시료 지원",myStatus:"INTERESTED"}],
+   reviews:[{postId:322,type:"PASS_REVIEW",rating:4,oneLiner:"컴활 1급이 도움됐어요",jobCategory:"OFFICE"}]},
+ err:["JOB_NOT_FOUND"]},
+{d:"job",m:"POST",p:"/jobs/{jobId}/bookmark",a:"U",pr:2,t:"관심 공고 저장",
+ desc:"북마크하면 공고 마감일이 캘린더에 JOB_DEADLINE으로 등록됩니다.",
+ path:[["jobId","Long","공고 ID"]],res:{jobId:5512,bookmarked:true,calendarEventId:902},
+ err:["JOB_NOT_FOUND","ALREADY_EXISTS"],status:201},
+{d:"job",m:"DELETE",p:"/jobs/{jobId}/bookmark",a:"U",pr:2,t:"관심 공고 해제",
+ desc:"캘린더의 채용 마감 일정도 함께 지웁니다.",path:[["jobId","Long","공고 ID"]],res:null,status:204},
+{d:"job",m:"GET",p:"/jobs/bookmarks",a:"U",pr:2,t:"관심 공고 목록",
+ desc:"저장한 공고를 마감 임박순으로 돌려줍니다. 마감된 공고는 closed: true로 표시합니다.",
+ query:[["page, size","Integer","N","페이지"]],
+ res:{content:[{jobId:5512,company:"(주)시흥테크",title:"사무직 신입 채용",deadline:"2026-11-01",dDay:7,closed:false}],page:0,size:20,totalElements:4,totalPages:1,hasNext:false}},
+
+/* ---------- post ---------- */
+{d:"post",m:"GET",p:"/posts",a:"U?",pr:2,t:"후기·포트폴리오 목록",
+ desc:"커뮤니티 탭과 필터에 대응합니다. sameStage=true면 내 상황과 같은 작성자의 글만 봅니다(로그인 필요).",
+ query:[["type","PostType","N","탭"],["policyId","Long","N","정책 태그"],["jobId","Long","N","공고 태그"],["jobCategory","JobCategory","N","직무 태그"],["sameStage","Boolean","N","내 상황과 같은 글만"],["page, size","Integer","N","페이지, 최신순"]],
+ res:{content:[{postId:301,type:"PROGRAM_REVIEW",rating:5,oneLiner:"실습 연계까지 돼서 좋았어요",prepPeriod:"MONTH_1",helpfulPoints:["실무 경험","이력서 첨삭"],policy:{policyId:12,title:"청년 직무역량 아카데미"},job:null,jobCategory:"OFFICE",authorStage:"GRADUATING",authorStageAfter:"FIRST_JOB",createdAt:"2026-09-30T20:11:00"}],page:0,size:20,totalElements:64,totalPages:4,hasNext:true},
+ notes:["작성자 닉네임·실명은 내려주지 않음. 상황(authorStage)만 표시"]},
+{d:"post",m:"GET",p:"/posts/{postId}",a:"U?",pr:2,t:"게시글 상세",
+ desc:"목록 항목에 자유 의견 본문, 포트폴리오 링크, 내가 쓴 글인지(mine)를 더해 줍니다.",
+ path:[["postId","Long","게시글 ID"]],
+ res:{postId:301,type:"PROGRAM_REVIEW",rating:5,oneLiner:"실습 연계까지 돼서 좋았어요",prepPeriod:"MONTH_1",helpfulPoints:["실무 경험","이력서 첨삭"],content:"8주 동안 엑셀, 문서작성 위주로 배웠고...",portfolioUrl:null,policy:{policyId:12,title:"청년 직무역량 아카데미"},mine:false,createdAt:"2026-09-30T20:11:00"},
+ err:["POST_NOT_FOUND"]},
+{d:"post",m:"POST",p:"/posts",a:"U",pr:2,t:"1분 후기 작성",
+ desc:"선택형 위주의 1분 후기 양식을 저장합니다. 저장 후 연결된 정책·공고에 관심을 둔 사용자에게 새 후기 알림이 갑니다.",
+ body:{type:"PROGRAM_REVIEW",policyId:12,jobId:null,jobCategory:"OFFICE",rating:5,oneLiner:"실습 연계까지 돼서 좋았어요",prepPeriod:"MONTH_1",helpfulPoints:["실무 경험","이력서 첨삭"],content:"8주 동안 엑셀, 문서작성 위주로 배웠고...",portfolioUrl:null},
+ res:{postId:341},
+ notes:["type, rating(1~5), oneLiner(최대 60자), prepPeriod 필수","PROGRAM_REVIEW는 policyId, PASS_REVIEW는 jobId 또는 jobCategory 중 하나 필수","PORTFOLIO는 portfolioUrl(링크) 필수, rating 생략 가능. 파일 첨부·피드백 댓글은 3순위라 제외","본문에 전화번호·이메일 패턴이 있으면 CONTACT_INFO_DETECTED"],
+ err:["INVALID_INPUT","CONTACT_INFO_DETECTED","POLICY_NOT_FOUND"],status:201},
+{d:"post",m:"PATCH",p:"/posts/{postId}",a:"U",pr:2,t:"게시글 수정",
+ desc:"작성자만 수정할 수 있습니다. 보낸 필드만 바뀌고, type은 바꿀 수 없습니다.",
+ path:[["postId","Long","게시글 ID"]],body:{oneLiner:"실습 연계 덕분에 첫 취업까지 했어요",rating:5},res:{postId:301},
+ err:["POST_NOT_FOUND","FORBIDDEN","CONTACT_INFO_DETECTED"]},
+{d:"post",m:"DELETE",p:"/posts/{postId}",a:"U",pr:2,t:"게시글 삭제",desc:"작성자만 삭제할 수 있습니다. 소프트 삭제로 처리합니다.",path:[["postId","Long","게시글 ID"]],res:null,status:204,err:["POST_NOT_FOUND","FORBIDDEN"]},
+{d:"post",m:"GET",p:"/users/me/posts",a:"U",pr:2,t:"내가 쓴 후기·포트폴리오",
+ desc:"제안서 3-3 '내 기록'(내가 남긴 후기)에 해당합니다. 숨김 처리된 글도 본인에게는 hidden: true로 보여줍니다.",
+ query:[["type","PostType","N","종류"],["page, size","Integer","N","페이지"]],
+ res:{content:[{postId:301,type:"PROGRAM_REVIEW",oneLiner:"실습 연계까지 돼서 좋았어요",policy:{policyId:12,title:"청년 직무역량 아카데미"},hidden:false,createdAt:"2026-09-30T20:11:00"}],page:0,size:20,totalElements:2,totalPages:1,hasNext:false}},
+{d:"post",m:"POST",p:"/posts/{postId}/reports",a:"U",pr:2,t:"게시글 신고",
+ desc:"한 사람이 같은 글을 한 번만 신고할 수 있습니다. 신고가 5건 쌓이면 자동으로 숨기고 관리자 검토 목록에 올립니다.",
+ path:[["postId","Long","게시글 ID"]],body:{reason:"PERSONAL_INFO",detail:"본문에 실명이 있어요"},res:{reportId:77,autoHidden:false},
+ err:["ALREADY_EXISTS","POST_NOT_FOUND"],status:201},
+
+/* ---------- calendar ---------- */
+{d:"calendar",m:"GET",p:"/calendar/events",a:"U",pr:2,t:"월별 일정",
+ desc:"월간 캘린더에 찍을 일정을 돌려줍니다. 로드맵 항목과 관심 공고에서 자동으로 생긴 일정, 직접 추가한 일정이 모두 포함됩니다.",
+ query:[["year","Integer","Y","예: 2026"],["month","Integer","Y","1~12"],["types","EventType[]","N","쉼표 구분, 일정 종류 필터"]],
+ res:[{eventId:880,date:"2026-11-05",type:"APPLY_END",title:"청년 직무역량 아카데미 접수 마감",sourceType:"POLICY",sourceId:12,itemStatus:"PLANNED",dDay:11},{eventId:902,date:"2026-11-01",type:"JOB_DEADLINE",title:"(주)시흥테크 사무직 신입",sourceType:"JOB",sourceId:5512,itemStatus:null,dDay:7}]},
+{d:"calendar",m:"GET",p:"/calendar/events/upcoming",a:"U",pr:2,t:"다가오는 일정",
+ desc:"캘린더 오른쪽 패널의 '이번 주 마감'에 씁니다.",
+ query:[["days","Integer","N","기본 7, 최대 30"]],
+ res:[{eventId:881,date:"2026-10-28",type:"APPLY_END",title:"청년 자격증 응시료 지원 마감",dDay:3,sourceType:"POLICY",sourceId:21}]},
+{d:"calendar",m:"POST",p:"/calendar/events",a:"U",pr:2,t:"일정 추가",
+ desc:"정책 상세의 '캘린더에 추가'나 직접 입력한 일정을 저장합니다. policyId를 보내면 그 정책의 상담일·참여일을, 없으면 title과 date로 CUSTOM 일정을 만듭니다.",
+ body:{type:"COUNSELING",date:"2026-11-03",title:"청년스테이션 진로 상담",policyId:7,memo:"오후 3시, 신분증 지참"},
+ res:{eventId:915},err:["INVALID_INPUT"],status:201},
+{d:"calendar",m:"DELETE",p:"/calendar/events/{eventId}",a:"U",pr:2,t:"일정 삭제",
+ desc:"직접 추가한 일정만 지울 수 있습니다. 자동 일정은 로드맵 항목이나 관심 공고를 지우면 함께 사라집니다.",
+ path:[["eventId","Long","일정 ID"]],res:null,status:204,err:["EVENT_NOT_FOUND","FORBIDDEN"]},
+
+/* ---------- noti ---------- */
+{d:"noti",m:"GET",p:"/notifications",a:"U",pr:2,t:"알림 목록",
+ desc:"헤더 종 아이콘의 드롭다운에 씁니다. link로 이동할 화면을 정합니다.",
+ query:[["type","NotificationType","N","종류 필터"],["page, size","Integer","N","기본 size 20"]],
+ res:{content:[{notificationId:1203,type:"DEADLINE",title:"자격증 응시료 지원 신청 마감 D-3",link:{targetType:"POLICY",targetId:21},read:false,createdAt:"2026-10-25T09:00:00"},{notificationId:1199,type:"NEW_JOB",title:"조건에 맞는 새 공고 3건",link:{targetType:"JOB_LIST",targetId:null},read:true,createdAt:"2026-10-25T04:05:00"}],page:0,size:20,totalElements:15,totalPages:1,hasNext:false}},
+{d:"noti",m:"GET",p:"/notifications/unread-count",a:"U",pr:2,t:"안 읽은 알림 수",desc:"헤더 빨간 점 숫자입니다. 화면 이동 시마다 가볍게 호출합니다.",res:{unreadCount:4}},
+{d:"noti",m:"PATCH",p:"/notifications/{notificationId}/read",a:"U",pr:2,t:"알림 읽음 처리",desc:"알림을 눌러 이동할 때 호출합니다.",path:[["notificationId","Long","알림 ID"]],res:{notificationId:1203,read:true}},
+{d:"noti",m:"PATCH",p:"/notifications/read-all",a:"U",pr:2,t:"모두 읽음",desc:"",res:{updatedCount:4}},
+
+/* ---------- admin ---------- */
+{d:"admin",m:"GET",p:"/admin/policies",a:"A",pr:2,t:"정책 관리 목록",
+ desc:"출처, 모집상태, 오래된 정보 여부로 거릅니다. stale=true는 마지막 확인일이 30일 넘은 정책입니다.",
+ query:[["source","PolicySource","N","ONTONG · ADMIN"],["recruitStatus","RecruitStatus","N","모집상태"],["stale","Boolean","N","확인 필요한 정책만"],["keyword","String","N","정책명·기관명"],["page, size","Integer","N","페이지"]],
+ res:{content:[{policyId:12,title:"청년 직무역량 아카데미",agency:"시흥시청소년청년재단",source:"ADMIN",recruitStatus:"OPEN",applyEndDate:"2026-11-05",createdAt:"2026-10-01",lastVerifiedAt:"2026-10-20",stale:false,roadmapItemCount:38}],page:0,size:20,totalElements:112,totalPages:6,hasNext:true}},
+{d:"admin",m:"POST",p:"/admin/policies",a:"A",pr:2,t:"정책·프로그램 등록",
+ desc:"시흥 지역 프로그램처럼 API로 받을 수 없는 정보를 직접 등록합니다. 공식 출처 URL은 필수입니다.",
+ body:{title:"청년 직무역량 아카데미",field:"EMPLOYMENT",agency:"시흥시청소년청년재단",target:"시흥시 거주 19~24세 미취업 청년",content:"직무별 실무 교육 8주 과정",applyStartDate:"2026-10-20",applyEndDate:"2026-11-05",contact:"031-000-0000",sourceUrl:"https://...",applyUrl:"https://...",lifeStages:["GRADUATING","JOB_SEEKING"],tags:["사무","IT","자격증"]},
+ res:{policyId:12,recruitStatus:"OPEN",lastVerifiedAt:"2026-10-25"},
+ notes:["recruitStatus는 접수기간으로 서버가 계산","tags는 채용공고의 '도움 되는 지원' 매칭에 사용"],
+ err:["INVALID_INPUT"],status:201},
+{d:"admin",m:"PUT",p:"/admin/policies/{policyId}",a:"A",pr:2,t:"정책·프로그램 수정",
+ desc:"등록과 같은 본문 전체를 보냅니다. 저장하면 마지막 확인일이 오늘로 바뀌고, 사용자 로드맵에 바로 반영됩니다.",
+ path:[["policyId","Long","정책 ID"]],body:"/* POST /admin/policies와 같은 형식 */",res:{policyId:12,lastVerifiedAt:"2026-10-25"},err:["POLICY_NOT_FOUND"]},
+{d:"admin",m:"PATCH",p:"/admin/policies/{policyId}/end",a:"A",pr:2,t:"정책 종료",
+ desc:"사업이 끝난 정책을 ENDED로 바꿉니다. 새 로드맵에는 들어가지 않고, 이미 담은 사용자에게는 '종료된 정책'으로 표시됩니다.",
+ path:[["policyId","Long","정책 ID"]],body:{reason:"2026년 사업 종료"},res:{policyId:12,recruitStatus:"ENDED"}},
+{d:"admin",m:"PATCH",p:"/admin/policies/{policyId}/verify",a:"A",pr:2,t:"정보 확인 완료",
+ desc:"내용 변경 없이 공식 사이트와 대조만 했을 때 마지막 확인일을 오늘로 갱신합니다.",
+ path:[["policyId","Long","정책 ID"]],res:{policyId:12,lastVerifiedAt:"2026-10-25"}},
+{d:"admin",m:"GET",p:"/admin/roadmap-templates",a:"A",pr:2,t:"로드맵 템플릿 목록",
+ desc:"상황·관심분야 조합별로 미리 만든 템플릿입니다.",
+ res:[{templateId:3,name:"졸업 예정 · 취업 준비 · 취업/주거",lifeStages:["GRADUATING","JOB_SEEKING"],interests:["EMPLOYMENT","HOUSING"],stepCount:5,userCount:41}]},
+{d:"admin",m:"POST",p:"/admin/roadmap-templates",a:"A",pr:2,t:"로드맵 템플릿 등록",
+ desc:"단계 순서와 단계별 정책을 정합니다. 수정은 PUT /admin/roadmap-templates/{templateId}로 같은 본문을 보냅니다.",
+ body:{name:"졸업 예정 · 취업 준비 · 취업/주거",lifeStages:["GRADUATING","JOB_SEEKING"],interests:["EMPLOYMENT","HOUSING"],steps:[{stepOrder:1,title:"진로·취업 상담",policyIds:[7]},{stepOrder:2,title:"직무역량 프로그램",policyIds:[12,15]},{stepOrder:3,title:"취업지원사업",policyIds:[21,24]},{stepOrder:4,title:"주거지원",policyIds:[30]},{stepOrder:5,title:"금융·생활지원",policyIds:[33,34]}]},
+ res:{templateId:3},err:["INVALID_INPUT","POLICY_NOT_FOUND"],status:201},
+{d:"admin",m:"GET",p:"/admin/reports",a:"A",pr:2,t:"신고 목록",
+ desc:"게시글별로 묶어 보여줍니다. 자동 숨김된 글이 먼저 옵니다.",
+ query:[["status","String","N","PENDING(기본) · RESOLVED"],["page, size","Integer","N","페이지"]],
+ res:{content:[{postId:322,oneLiner:"...",reportCount:5,reasons:{PERSONAL_INFO:4,SPAM:1},autoHidden:true,status:"PENDING",lastReportedAt:"2026-10-24T22:10:00"}],page:0,size:20,totalElements:3,totalPages:1,hasNext:false}},
+{d:"admin",m:"PATCH",p:"/admin/posts/{postId}/visibility",a:"A",pr:2,t:"게시글 숨김·복구",
+ desc:"검토 결과에 따라 숨기거나 다시 보이게 합니다. 처리하면 해당 글의 신고는 RESOLVED가 됩니다.",
+ path:[["postId","Long","게시글 ID"]],body:{hidden:true,reason:"실명 노출"},res:{postId:322,hidden:true}},
+{d:"admin",m:"GET",p:"/admin/stats",a:"A",pr:2,t:"운영 지표",
+ desc:"제안서 8-3 운영 지표와 8-2 데이터 활용에 대응합니다. 개인 식별 정보 없이 집계만 돌려줍니다.",
+ query:[["from, to","LocalDate","N","기간, 기본 최근 7일"]],
+ res:{period:{from:"2026-10-19",to:"2026-10-25"},revisitRate7d:0.42,bookmarkedJobCount:57,reviewCount:31,topPrograms:[{policyId:12,title:"청년 직무역량 아카데미",roadmapItemCount:38,reviewCount:7}]},
+ notes:["revisitRate7d: 가입 후 7일 안에 다시 접속한 사용자 비율","topPrograms: 프로그램별 관심 등록 수·후기 수 (지역 기관 제공용)"]},
+{d:"admin",m:"POST",p:"/admin/sync/{source}",a:"A",pr:2,t:"외부 데이터 수동 수집",
+ desc:"스케줄러를 기다리지 않고 바로 수집합니다. 시연 전이나 API 키 발급 직후에 씁니다.",
+ path:[["source","String","ontong · work24"]],res:{syncLogId:58,source:"WORK24",startedAt:"2026-10-25T15:02:00",status:"RUNNING"},status:202},
+{d:"admin",m:"GET",p:"/admin/sync/logs",a:"A",pr:2,t:"수집 기록",
+ desc:"자동·수동 수집 결과를 최신순으로 보여줍니다.",
+ res:[{syncLogId:58,source:"WORK24",trigger:"MANUAL",startedAt:"2026-10-25T15:02:00",finishedAt:"2026-10-25T15:02:41",status:"SUCCESS",fetched:214,inserted:12,updated:30,failed:0}]}
+];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const slug = e => (e.m + e.p).toLowerCase().replace(/[{}]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+const authLabel = {"-":"불필요","U":"로그인","U?":"선택","A":"관리자"};
+const json = v => typeof v === "string" ? v : JSON.stringify(v, null, 2);
+E.forEach(e => e.id = "ep-" + slug(e));
+
+function wrap(e){
+  const status = e.status || 200;
+  if (e.res === null) return null;
+  return {success:true, code:"OK", message:"요청이 성공했습니다.", data:e.res};
+}
+
+function epHTML(e){
+  const parts = [];
+  if (e.desc) parts.push(`<p>${esc(e.desc)}</p>`);
+  const rows = [];
+  (e.path||[]).forEach(r => rows.push(`<tr><td><code>${esc(r[0])}</code></td><td>path</td><td class="mono">${esc(r[1])}</td><td>Y</td><td>${esc(r[2])}</td></tr>`));
+  (e.query||[]).forEach(r => rows.push(`<tr><td><code>${esc(r[0])}</code></td><td>query</td><td class="mono">${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td></tr>`));
+  if (rows.length) parts.push(`<div><div class="lbl">파라미터</div><div class="tbl"><table><thead><tr><th>이름</th><th>위치</th><th>타입</th><th>필수</th><th>설명</th></tr></thead><tbody>${rows.join("")}</tbody></table></div></div>`);
+  const status = e.status || 200;
+  const resBlock = e.res === null
+    ? `<pre>HTTP ${status} No Content</pre>`
+    : `<pre>HTTP ${status}\n${esc(json(wrap(e)))}</pre>`;
+  if (e.body !== undefined){
+    parts.push(`<div class="two"><div style="min-width:0"><div class="lbl">요청 본문</div><pre>${esc(json(e.body))}</pre></div><div style="min-width:0"><div class="lbl">응답</div>${resBlock}</div></div>`);
+  } else {
+    parts.push(`<div style="min-width:0"><div class="lbl">응답</div>${resBlock}</div>`);
+  }
+  if (e.notes && e.notes.length) parts.push(`<div><div class="lbl">규칙</div><ul class="notes">${e.notes.map(n=>`<li>${esc(n)}</li>`).join("")}</ul></div>`);
+  if (e.err && e.err.length) parts.push(`<div><div class="lbl">에러</div><div class="errs">${e.err.map(c=>`<code>${esc(c)}</code>`).join("")}</div></div>`);
+  return `<details class="ep" id="${e.id}" open>
+    <summary>
+      <span class="m ${e.m}">${e.m}</span>
+      <span class="path">/api/v1${esc(e.p)}</span>
+      <span class="tags"><span class="auth" title="권한">${authLabel[e.a]}</span><span class="prio ${e.pr===1?"p1":""}">${e.pr}순위</span><button class="copy" type="button" data-path="/api/v1${esc(e.p)}">복사</button><span class="chev" aria-hidden="true">›</span></span>
+      <span class="title">${esc(e.t)}</span>
+    </summary>
+    <div class="ep-body">${parts.join("")}</div>
+  </details>`;
+}
+
+function render(){
+  const q = $("#q").value.trim().toLowerCase();
+  const methods = [...document.querySelectorAll("#methodChips .chip[aria-pressed='true']")].map(b=>b.dataset.m);
+  const match = e => (!methods.length || methods.includes(e.m)) &&
+    (!q || [e.p,e.t,e.desc,(e.err||[]).join(" "),(e.notes||[]).join(" ")].join(" ").toLowerCase().includes(q));
+  const list = E.filter(match);
+  $("#shown").textContent = `${list.length} / ${E.length}`;
+  $("#sumBody").innerHTML = list.length ? list.map(e => `<tr>
+      <td><span class="m ${e.m}">${e.m}</span></td>
+      <td class="path"><a href="#${e.id}">${esc(e.p)}</a></td>
+      <td>${esc(e.t)}</td>
+      <td class="auth">${esc(e.a)}</td>
+      <td class="prio ${e.pr===1?"p1":""}">${e.pr}</td></tr>`).join("")
+    : `<tr><td colspan="5" class="empty">찾는 API가 없습니다. 검색어를 줄이거나 메서드 필터를 해제해 보세요.</td></tr>`;
+  $("#epList").innerHTML = DOMAINS.map(d => {
+    const items = list.filter(e => e.d === d.id);
+    if (!items.length) return "";
+    return `<h3 class="domain-h" id="d-${d.id}">${esc(d.name)}</h3><p class="domain-d">${esc(d.desc)} <span class="own">백엔드 담당 ${esc(d.own)}</span></p>${items.map(epHTML).join("")}`;
+  }).join("") || `<p class="empty">조건에 맞는 엔드포인트가 없습니다.</p>`;
+}
+
+$("#totalCount").textContent = E.length;
+$("#idxDomains").innerHTML = DOMAINS.map(d => `<li><a href="#d-${d.id}"><span>${esc(d.name)}</span><span class="n">${E.filter(e=>e.d===d.id).length}</span></a></li>`).join("");
+$("#methodChips").innerHTML = ["GET","POST","PUT","PATCH","DELETE"].map(m=>`<button class="chip" type="button" aria-pressed="false" data-m="${m}">${m}</button>`).join("");
+$("#methodChips").addEventListener("click", ev => {
+  const b = ev.target.closest(".chip"); if (!b) return;
+  b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true");
+  render();
+});
+$("#q").addEventListener("input", render);
+$("#openAll").addEventListener("click", () => document.querySelectorAll(".ep").forEach(d => d.open = true));
+$("#closeAll").addEventListener("click", () => document.querySelectorAll(".ep").forEach(d => d.open = false));
+document.addEventListener("click", ev => {
+  const b = ev.target.closest(".copy"); if (!b) return;
+  ev.preventDefault(); ev.stopPropagation();
+  const text = b.dataset.path;
+  const done = () => { b.textContent = "복사됨"; setTimeout(()=>b.textContent="복사", 1200); };
+  try {
+    navigator.clipboard.writeText(text).then(done).catch(() => { b.textContent = text; });
+  } catch(_) { b.textContent = text; }
+});
+render();
+if (location.hash) { const t = document.getElementById(location.hash.slice(1)); if (t) { if (t.tagName==="DETAILS") t.open = true; t.scrollIntoView(); } }
+</script>
+</body>
+</html>
